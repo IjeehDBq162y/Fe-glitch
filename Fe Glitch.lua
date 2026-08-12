@@ -76,6 +76,56 @@ local function ensureScriptWorksInAnyGame()
     if not RunService or not Debris or not Player or not character then
         warn("Required services or objects are not available. The script may not work as expected.")
     end
+end local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+
+-- Create or get the RemoteEvent for glitch effect synchronization
+local glitchEffectEvent = ReplicatedStorage:WaitForChild("GlitchEffectEvent")
+
+-- Table to track active glitch effects per player
+local activeGlitchEffects = {}
+
+-- Function to validate player and create glitch effect data
+local function onGlitchEffectRequested(player, characterPosition, colorIndex)
+    -- Security: Validate that the player exists and is in the game
+    if not Players:FindFirstChild(player.Name) then
+        warn("Invalid player attempted to trigger glitch effect")
+        return
+    end
+    
+    -- Security: Validate character exists and position is reasonable
+    if not player.Character or not player.Character:FindFirstChild("HumanoidRootPart") then
+        return
+    end
+    
+    -- Security: Verify position is close to player's actual position (prevent remote abuse)
+    local actualPosition = player.Character.HumanoidRootPart.Position
+    local distance = (characterPosition - actualPosition).Magnitude
+    
+    if distance > 50 then
+        warn("Player " .. player.Name .. " attempted to create glitch effect too far from character")
+        return
+    end
+    
+    -- Security: Validate color index is within acceptable range
+    if type(colorIndex) ~= "number" or colorIndex < 1 or colorIndex > 8 then
+        warn("Invalid color index received from player " .. player.Name)
+        return
+    end
+    
+    -- Broadcast the glitch effect to all clients
+    -- This allows everyone to see the effect on the requesting player
+    glitchEffectEvent:FireAllClients(player, characterPosition, colorIndex)
 end
 
-ensureScriptWorksInAnyGame()
+-- Connect the RemoteEvent to handle glitch effect requests
+glitchEffectEvent.OnServerEvent:Connect(onGlitchEffectRequested)
+
+-- Cleanup when player leaves
+Players.PlayerRemoving:Connect(function(player)
+    if activeGlitchEffects[player.UserId] then
+        activeGlitchEffects[player.UserId] = nil
+    end
+end)
+
+print("Glitch Effect Server initialized successfully")

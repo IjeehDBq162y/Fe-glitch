@@ -1,101 +1,80 @@
--- FE Glitch Effect — FULLY OPAQUE, everyone sees it  
-local Player = game:Players.LocalPlayer  
+-- FE Glitch — Execute to activate, die/respawn = gone forever until re-execute
+
+local Player = game.Players.LocalPlayer  
 local pureColors = {  
-Color3.new(0,0,0), Color3.new(1,0,0), Color3.new(0,1,0),  
-Color3.new(0,0,1), Color3.new(1,1,1), Color3.new(1,1,0),  
-Color3.new(0,1,1), Color3.new(1,0,1),  
+Color3.new(0,0,0),   -- Black  
+Color3.new(1,0,0),   -- Red  
+Color3.new(0,1,0),   -- Green  
+Color3.new(0,0,1),   -- Blue  
+Color3.new(1,1,1),   -- White  
+Color3.new(1,1,0),   -- Yellow  
+Color3.new(0,1,1),   -- Cyan  
+Color3.new(1,0,1),   -- Magenta  
 }
 
-local running = false
+local TAG = "OrbitGlitch"
 
-local function createGlitchPart(hrp)  
-local part = Instance.new("Part")  
-part.Size = Vector3.new(math.random(1,3), math.random(1,3), math.random(1,3))  
-part.Anchored = false  
-part.Material = Enum.Material.Neon  
-part.BrickColor = BrickColor.new(pureColors[math.random(1, #pureColors)])  
-part.Transparency = 0 -- FULLY OPAQUE  
-part.CanCollide = false  
-part.CanQuery = false  
-part.CanTouch = false  
-part.CastShadow = false
-
-part.Parent = hrp.Parent
-
-local weld = Instance.new("Weld")  
-weld.Part0 = hrp  
-weld.Part1 = part  
-weld.C0 = CFrame.new(math.random(-4,4), math.random(-4,4), math.random(-4,4))  
-weld.Parent = part
-
-game:GetService("Debris"):AddItem(part, 0.5)  
-end
-
-local function createGlitchSprite(hrp)  
-local char = hrp.Parent  
-local billboard = Instance.new("BillboardGui")  
-billboard.Name = "GlitchEffect"  
-billboard.Size = UDim2.new(0, math.random(20,60), 0, math.random(20,60))  
-billboard.StudsOffset = Vector3.new(math.random(-4,4), math.random(-4,4), math.random(-4,4))  
-billboard.AlwaysOnTop = false  
-billboard.Enabled = true  
-billboard.ClipsDescendants = false  
-billboard.Parent = char
-
-local image = Instance.new("ImageLabel")  
-image.Size = UDim2.new(1,0,1,0)  
-image.BackgroundColor3 = pureColors[math.random(1, #pureColors)]  
-image.BackgroundTransparency = 0 -- FULLY OPAQUE  
-image.BorderSizePixel = 0  
-image.Parent = billboard
-
-game:GetService("Debris"):AddItem(billboard, 0.4)  
-end
-
-local function stopGlitch()  
-running = false  
-local char = Player.Character  
-if char then  
+local function killAllGlitchParts(char)  
+if not char then return end  
 for _, v in ipairs(char:GetChildren()) do  
-if v:IsA("BasePart") and v.Material == Enum.Material.Neon then  
+pcall(function()  
+if v:IsA("BasePart") and v:GetAttribute(TAG) then  
 v:Destroy()  
 end  
-end  
-for _, v in ipairs(char:GetChildren()) do  
-if v:IsA("BillboardGui") and v.Name == "GlitchEffect" then  
-v:Destroy()  
-end  
-end  
+end)  
 end  
 end
 
 local function startGlitch()  
-if running then return end  
-running = true
+local char = Player.Character  
+if not char then return end  
+local hrp = char:FindFirstChild("HumanoidRootPart")  
+if not hrp then return end
 
+local angle = 0  
+local running = true
+
+-- Kill glitch on death — permanently  
+local hum = char:FindFirstChild("Humanoid")  
+if hum then  
+hum.Died:Connect(function()  
+running = false  
+killAllGlitchParts(char)  
+end)  
+end
+
+-- Run the orbital loop  
 task.spawn(function()  
 while running do  
-local char = Player.Character  
-local hrp = char and char:FindFirstChild("HumanoidRootPart")  
-if hrp then  
-for i = 1, math.random(2,4) do  
-createGlitchPart(hrp)  
+if not char.Parent then running = false break end  
+for i = 1, 4 do  
+local blockAngle = angle + (i * math.pi / 2)  
+local radius = math.random(3,6)  
+local height = math.random(-4,4)  
+local x = math.sin(blockAngle) * radius  
+local z = math.cos(blockAngle) * radius
+
+local glitchPart = Instance.new("Part")  
+glitchPart.Size = Vector3.new(math.random(1,3), math.random(1,3), math.random(1,3))  
+glitchPart.Position = hrp.Position + Vector3.new(x, height, z)  
+glitchPart.Anchored = true  
+glitchPart.Material = Enum.Material.Neon  
+glitchPart.BrickColor = BrickColor.new(pureColors[math.random(1, #pureColors)])  
+glitchPart.Transparency = 0  
+glitchPart.CanCollide = false  
+glitchPart:SetAttribute(TAG, true)  
+glitchPart.Parent = hrp.Parent
+
+game:GetService("Debris"):AddItem(glitchPart, 0.5)  
 end  
-for i = 1, math.random(2,3) do  
-createGlitchSprite(hrp)  
-end  
-end  
-task.wait(0.25)  
+angle = angle + 0.3  
+task.wait(0.3)  
 end  
 end)  
 end
 
-Player.CharacterAdded:Connect(function(newChar)  
-stopGlitch()  
-newChar:WaitForChild("HumanoidRootPart")  
-startGlitch()  
-end)
+-- Clean any leftovers from previous runs  
+killAllGlitchParts(Player.Character)
 
-if Player.Character then  
+-- Start fresh  
 startGlitch()  
-end  

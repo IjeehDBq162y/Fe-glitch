@@ -1,4 +1,5 @@
--- FE Glitch — Execute to activate, die/respawn = gone forever until re-execute
+-- FE Glitch — Everyone sees the colors orbiting you  
+-- Execute = glitch appears. Die/respawn = gone forever. Re-execute to bring back.
 
 local Player = game.Players.LocalPlayer  
 local pureColors = {  
@@ -34,7 +35,6 @@ if not hrp then return end
 local angle = 0  
 local running = true
 
--- Kill glitch on death — permanently  
 local hum = char:FindFirstChild("Humanoid")  
 if hum then  
 hum.Died:Connect(function()  
@@ -43,7 +43,6 @@ killAllGlitchParts(char)
 end)  
 end
 
--- Run the orbital loop  
 task.spawn(function()  
 while running do  
 if not char.Parent then running = false break end  
@@ -63,7 +62,7 @@ glitchPart.BrickColor = BrickColor.new(pureColors[math.random(1, #pureColors)])
 glitchPart.Transparency = 0  
 glitchPart.CanCollide = false  
 glitchPart:SetAttribute(TAG, true)  
-glitchPart.Parent = hrp.Parent
+glitchPart.Parent = hrp.Parent -- Parented to character = everyone sees it
 
 game:GetService("Debris"):AddItem(glitchPart, 0.5)  
 end  
@@ -73,8 +72,6 @@ end
 end)  
 end
 
--- Clean any leftovers from previous runs  
-killAllGlitchParts(Player.Character)
-
--- Start fresh  
+-- Clean leftovers and start  
+killAllGlitchParts(Player.Character)  
 startGlitch()  

@@ -1,4 +1,4 @@
--- FE Glitch — Everyone sees the colors orbiting you  
+-- FE Glitch — Colored blocks orbiting you, no flashing lights  
 -- Execute = glitch appears. Die/respawn = gone forever. Re-execute to bring back.
 
 local Player = game.Players.LocalPlayer  
@@ -62,7 +62,7 @@ glitchPart.BrickColor = BrickColor.new(pureColors[math.random(1, #pureColors)])
 glitchPart.Transparency = 0  
 glitchPart.CanCollide = false  
 glitchPart:SetAttribute(TAG, true)  
-glitchPart.Parent = hrp.Parent -- Parented to character = everyone sees it
+glitchPart.Parent = hrp.Parent -- FE replication = everyone sees it
 
 game:GetService("Debris"):AddItem(glitchPart, 0.5)  
 end  
